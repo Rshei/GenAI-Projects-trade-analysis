@@ -7,10 +7,28 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from langchain_core.tools import tool
 import pandas as pd
 import requests
 import yfinance as yf
+
+try:
+    from langchain_core.tools import tool
+except Exception:
+    class _FallbackTool:
+        def __init__(self, fn):
+            self._fn = fn
+            self.__name__ = getattr(fn, "__name__", "tool")
+            self.__doc__ = getattr(fn, "__doc__", "")
+
+        def __call__(self, *args, **kwargs):
+            return self._fn(*args, **kwargs)
+
+        def invoke(self, payload: Optional[Dict] = None):
+            payload = payload or {}
+            return self._fn(**payload)
+
+    def tool(fn):
+        return _FallbackTool(fn)
 
 
 class GuardError(RuntimeError):
