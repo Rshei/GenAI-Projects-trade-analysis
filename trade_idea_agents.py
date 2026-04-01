@@ -579,8 +579,14 @@ def run_pipeline(universe_limit: int = 100, rsi_threshold: float = 35.0, top_n: 
     
     # Add news sentiment if requested
     if include_news:
+        news_cache: Dict[str, Dict] = {}
         for idea in ranked:
-            news_data = get_news_sentiment.invoke({"symbol": idea["symbol"]})
+            symbol = str(idea.get("symbol", ""))
+            if symbol in news_cache:
+                news_data = news_cache[symbol]
+            else:
+                news_data = get_news_sentiment.invoke({"symbol": symbol})
+                news_cache[symbol] = news_data
             idea["news_sentiment"] = news_data.get("sentiment_score", 0.5)
             idea["buzz_score"] = news_data.get("buzz_score", 0.5)
         
